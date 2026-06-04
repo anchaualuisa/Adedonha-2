@@ -373,18 +373,9 @@ function onRoom(rm){
     beginRound();return;
   }
 
-  // AGUARDANDO: host verifica se todos enviaram e julga
+  // AGUARDANDO: so atualiza visual (julgamento eh feito pelo watchAnswers)
   if(cur==='s-wait'){
-    var answers=rm.answers||{};
-    renderWait(answers);
-    // So o host julga, e so uma vez (flag G.judging local)
-    if(G.host&&!G.judging&&rm.phase!=='result'){
-      var allIn=G.players.every(function(p){return answers[p.id]!==undefined;});
-      if(allIn){
-        G.judging=true; // flag local pra nao chamar duas vezes
-        doJudge(answers,rm);
-      }
-    }
+    renderWait(rm.answers||{});
   }
 }
 
@@ -471,8 +462,29 @@ function doSend(){
   $('btn-send').disabled=true;
   $('btn-send').style.opacity='0.5';
   show('s-wait');
-  // Salva minhas respostas — o listener do host vai detectar quando todos enviarem
-  db.ref('salas/'+G.code+'/answers/'+G.id).set(G.myAnswers);
+  // Salva respostas e inicia watch separado pra answers
+  db.ref('salas/'+G.code+'/answers/'+G.id).set(G.myAnswers).then(function(){
+    watchAnswers();
+  });
+}
+
+// Listener dedicado so pra /answers — mais confiavel que esperar onRoom
+function watchAnswers(){
+  var ref=db.ref('salas/'+G.code+'/answers');
+  ref.on('value',function(snap){
+    var answers=snap.val()||{};
+    renderWait(answers);
+    if(G.host&&!G.judging){
+      var allIn=G.players.every(function(p){return answers[p.id]!==undefined;});
+      if(allIn){
+        G.judging=true;
+        ref.off('value'); // para de ouvir
+        dbR('salas/'+G.code).then(function(rm){
+          return doJudge(answers,rm);
+        });
+      }
+    }
+  });
 }
 
 function renderWait(answers){
