@@ -116,7 +116,7 @@ input::placeholder{color:var(--b2)}
 <!-- HOME -->
 <div id="s-home">
   <div class="logo">Adedonha <em>✨</em></div>
-  <p class="sub">o clássico com IA pra julgar • até 6 jogadores • <strong style="color:var(--acc3)">v1.0</strong></p>
+  <p class="sub">o clássico com IA pra julgar • até 6 jogadores • <strong style="color:var(--acc3)">v1.1</strong></p>
   <div class="card">
     <p class="ct">Seu apelido</p>
     <input id="iname" type="text" placeholder="Como te chamam?" maxlength="20" autocomplete="off">
@@ -462,27 +462,27 @@ function doSend(){
   $('btn-send').disabled=true;
   $('btn-send').style.opacity='0.5';
   show('s-wait');
-  // Salva respostas e inicia watch separado pra answers
+  // Salva minhas respostas
   db.ref('salas/'+G.code+'/answers/'+G.id).set(G.myAnswers).then(function(){
-    watchAnswers();
+    // Host faz polling ate todos enviarem
+    if(G.host) pollAnswers();
   });
 }
 
-// Listener dedicado so pra /answers — mais confiavel que esperar onRoom
-function watchAnswers(){
-  var ref=db.ref('salas/'+G.code+'/answers');
-  ref.on('value',function(snap){
+function pollAnswers(){
+  if(G.judging)return;
+  db.ref('salas/'+G.code+'/answers').once('value').then(function(snap){
     var answers=snap.val()||{};
     renderWait(answers);
-    if(G.host&&!G.judging){
-      var allIn=G.players.every(function(p){return answers[p.id]!==undefined;});
-      if(allIn){
-        G.judging=true;
-        ref.off('value'); // para de ouvir
-        dbR('salas/'+G.code).then(function(rm){
-          return doJudge(answers,rm);
-        });
-      }
+    var allIn=G.players.every(function(p){return answers[p.id]!==undefined;});
+    if(allIn){
+      G.judging=true;
+      dbR('salas/'+G.code).then(function(rm){
+        return doJudge(answers,rm);
+      });
+    } else {
+      // Tenta de novo em 2 segundos
+      setTimeout(pollAnswers, 2000);
     }
   });
 }
