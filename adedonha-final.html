@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Adedonha</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;500&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK via compat (funciona em arquivo local no iOS) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+:root{--bg:#0d0d0d;--s:#161616;--s2:#1f1f1f;--b:#2a2a2a;--a:#c8f04a;--a2:#f04a8a;--t:#f0f0f0;--m:#777}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 48px;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(200,240,74,.07),transparent 65%);pointer-events:none}
+#app{width:100%;max-width:420px}
+h1{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;color:var(--a);letter-spacing:-1px;margin-bottom:2px}
+.tag{font-size:.82rem;color:var(--m);font-style:italic;margin-bottom:28px}
+.card{background:var(--s);border:1px solid var(--b);border-radius:14px;padding:20px;margin-bottom:12px}
+.ct{font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px}
+input{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);font-family:'DM Sans',sans-serif;font-size:1rem;padding:12px 14px;outline:none;transition:border-color .2s;margin-bottom:10px}
+input:focus{border-color:var(--a)}input::placeholder{color:var(--m)}
+.btn{width:100%;padding:14px;border:none;border-radius:9px;font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:6px}
+.bp{background:var(--a);color:#0d0d0d}
+.bs{background:transparent;color:var(--t);border:1px solid var(--b)}
+.bstop{display:block;width:100%;padding:18px;border:none;border-radius:9px;background:var(--a2);color:#fff;font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;cursor:pointer;margin-top:14px}
+.dv{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--m);font-size:.78rem}
+.dv::before,.dv::after{content:'';flex:1;height:1px;background:var(--b)}
+.rc{font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;color:var(--a);text-align:center;letter-spacing:10px;padding:6px 0}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;background:var(--s2);border-radius:30px;font-size:.85rem;border:1px solid var(--b);margin:3px}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--a)}
+.lb{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,var(--a),#9fd42a);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;color:#0d0d0d;margin:0 auto 6px;animation:glow 2.5s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 25px rgba(200,240,74,.2)}50%{box-shadow:0 0 55px rgba(200,240,74,.5)}}
+.tw{width:100%;height:5px;background:var(--s2);border-radius:3px;margin-bottom:16px}
+.tb{height:100%;background:var(--a);border-radius:3px;transition:width 1s linear,background .5s}
+.cr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cl{font-size:.72rem;color:var(--m);font-family:'Syne',sans-serif;font-weight:700;text-transform:uppercase;width:88px;flex-shrink:0}
+.ci{flex:1;margin-bottom:0!important;padding:9px 11px!important;font-size:.88rem!important}
+.sd{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--b);transition:background .2s}
+.rh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:.85rem;color:var(--m)}
+.ab{margin-bottom:12px}
+.apn{font-size:.7rem;font-family:'Syne',sans-serif;color:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.ar{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;background:var(--s2);border-radius:8px;margin-bottom:4px}
+.ac{font-size:.7rem;color:var(--m)}.av{font-size:.88rem;font-weight:500}
+.ch{font-size:.68rem;padding:2px 7px;border-radius:20px;font-family:'Syne',sans-serif;font-weight:700;white-space:nowrap}
+.cok{background:rgba(200,240,74,.12);color:var(--a)}
+.cdu{background:rgba(240,200,74,.12);color:#f0c84a}
+.cin{background:rgba(120,120,120,.15);color:var(--m)}
+.cer{background:rgba(240,74,138,.12);color:var(--a2)}
+.sr{display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--s2);border-radius:9px;margin-bottom:6px}
+.sr.top{border:1px solid var(--a);background:rgba(200,240,74,.04)}
+.sp{font-family:'Syne',sans-serif;font-weight:700;color:var(--a)}
+.ctr{text-align:center}.ex{font-size:2.2rem;margin-bottom:8px}.ms{font-size:.83rem;color:var(--m)}
+.wa::after{content:'';animation:dots 1.4s infinite steps(4)}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+.hidden{display:none!important}
+.err{color:var(--a2);font-size:.82rem;margin-top:5px;text-align:center;min-height:1.1em}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="s-home">
+  <h1>Adedonha</h1><p class="tag">o classico, com IA pra julgar ✨</p>
+  <div class="card">
+    <p class="ct">Seu nome</p>
+    <input id="iname" type="text" placeholder="Como te chamam?" maxlength="20">
+    <button class="btn bp" onclick="doCreate()">Criar Sala</button>
+    <div class="dv">ou entre em uma sala</div>
+    <input id="icode" type="text" placeholder="CODIGO" maxlength="4" style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-family:'Syne',sans-serif;font-size:1.5rem">
+    <button class="btn bs" onclick="doJoin()">Entrar na Sala</button>
+    <p id="herr" class="err"></p>
+  </div>
+</div>
+
+<div id="s-lobby" class="hidden">
+  <h1>Adedonha</h1><p class="tag">sala criada!</p>
+  <div class="card ctr">
+    <p class="ct">Codigo — manda pra ela!</p>
+    <div class="rc" id="lcode">----</div>
+    <p class="ms">Ela abre o arquivo e digita esse codigo</p>
+  </div>
+  <div class="card">
+    <p class="ct">Jogadoras</p>
+    <div id="lplayers"></div>
+    <div style="margin-top:12px">
+      <button id="bstart" class="btn bp hidden" onclick="doStart()">Comecar! 🚀</button>
+      <p id="lwait" class="ms ctr wa">Esperando a outra entrar</p>
+    </div>
+  </div>
+</div>
+
+<div id="s-game" class="hidden">
+  <div class="rh"><span>Rodada <strong id="grd">1</strong>/5</span><span id="gtxt" style="font-family:'Syne',sans-serif;font-weight:700;color:var(--a)">60s</span></div>
+  <div class="tw"><div class="tb" id="gbar"></div></div>
+  <div class="card ctr" style="padding:14px">
+    <div class="lb" id="gltr">A</div>
+    <p class="ms">com a letra...</p>
+  </div>
+  <div class="card">
+    <p class="ct">Suas respostas</p>
+    <div id="gcats"></div>
+    <button class="bstop" onclick="doStop()">STOP! 🛑</button>
+  </div>
+</div>
+
+<div id="s-wait" class="hidden ctr">
+  <div class="card ctr" style="padding:28px 20px">
+    <div class="ex">⏳</div>
+    <p style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:5px">Respostas enviadas!</p>
+    <p class="ms wa">Esperando a outra jogadora</p>
+  </div>
+</div>
+
+<div id="s-result" class="hidden">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-family:'Syne',sans-serif;font-weight:700">Rodada <span id="rrd">1</span></span>
+      <span style="font-family:'Syne',sans-serif;font-weight:800;color:var(--a)">+<span id="rmyp">0</span> pts</span>
+    </div>
+    <div id="rans"></div>
+  </div>
+  <div class="card"><p class="ct">Placar</p><div id="rsc"></div></div>
+  <button id="bnext" class="btn bp hidden" onclick="doNext()" style="margin-bottom:8px">Proxima Rodada</button>
+  <button id="bfinal" class="btn bp hidden" onclick="doFinal()">Resultado Final 🏆</button>
+  <p id="rwait" class="ms ctr wa hidden" style="margin-top:10px">Esperando host</p>
+</div>
+
+<div id="s-final" class="hidden">
+  <div class="card ctr" style="padding:28px 20px">
+    <div class="ex">🏆</div>
+    <p id="fwin" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;margin-bottom:4px"></p>
+    <p class="ms" style="margin-bottom:20px">venceu o jogo!</p>
+    <div id="fsc"></div>
+    <button class="btn bs" style="margin-top:18px" onclick="doReset()">Jogar de Novo 🔄</button>
+  </div>
+</div>
+</div>
+
+<script>
+// Firebase compat SDK (ja carregado via script tag acima)
+firebase.initializeApp({
+  apiKey: "AIzaSyCuFRF-Cl5_MbebVF2lpcOmpGA3GpEdAO8",
+  authDomain: "adedonha-d16ee.firebaseapp.com",
+  databaseURL: "https://adedonha-d16ee-default-rtdb.firebaseio.com",
+  projectId: "adedonha-d16ee",
+  storageBucket: "adedonha-d16ee.firebasestorage.app",
+  messagingSenderId: "960583430166",
+  appId: "1:960583430166:web:fb3de9f46b356d817c0537"
+});
+var db = firebase.database();
+
+var CATS = ['Nome','Animal','Fruta/Verdura','Lugar','Objeto','Celebridade'];
+var LTRS = 'ABCDEFGHIJLMNOPRSTV'.split('');
+var TOT = 5, SECS = 60;
+
+var uid  = function(){ return Math.random().toString(36).slice(2,9); };
+var norm = function(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); };
+var shuf = function(a){ for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a; };
+var show = function(id){ document.querySelectorAll('#app>div').forEach(function(d){d.classList.add('hidden');}); document.getElementById(id).classList.remove('hidden'); };
+var setErr = function(m){ document.getElementById('herr').textContent=m; };
+var vscrn = function(){ return ['s-home','s-lobby','s-game','s-wait','s-result','s-final'].find(function(id){return !document.getElementById(id).classList.contains('hidden');}); };
+var genCode = function(){ var c='ABCDEFGHJKLMNPRSTUVWXYZ',s=''; for(var i=0;i<4;i++) s+=c[Math.floor(Math.random()*c.length)]; return s; };
+
+var dbR = function(p){ return db.ref(p).once('value').then(function(s){ return s.exists()?s.val():null; }); };
+var dbW = function(p,d){ return db.ref(p).set(d); };
+var dbSub = function(p,cb){ var r=db.ref(p); r.on('value',function(s){cb(s.val());}); return function(){r.off();}; };
+
+var G = mk();
+function mk(){ return {name:'',id:'',code:'',host:false,players:[],scores:{},ltrs:[],rnd:0,ltr:'',sub:false,tInt:null,unsub:null,tLeft:SECS}; }
+
+function doCreate(){
+  var n = document.getElementById('iname').value.trim();
+  if(!n){setErr('Coloca seu nome!');return;}
+  setErr('');
+  G.name=n; G.id=uid(); G.host=true;
+  G.ltrs=shuf(LTRS.slice()).slice(0,TOT);
+  G.players=[{name:n,id:G.id}]; G.scores={}; G.scores[G.id]=0;
+  G.code=genCode();
+  var data = {phase:'lobby',players:G.players,scores:G.scores,ltrs:G.ltrs,rnd:0,ltr:'',answers:{},result:null,action:null};
+  dbW('salas/'+G.code, data).then(function(){
+    setErr('');
+    document.getElementById('lcode').textContent=G.code;
+    show('s-lobby'); renderLP(); listen();
+  }).catch(function(e){ setErr('Erro: '+e.message); });
+}
+
+function doJoin(){
+  var n = document.getElementById('iname').value.trim();
+  var c = document.getElementById('icode').value.trim().toUpperCase();
+  if(!n){setErr('Coloca seu nome!');return;}
+  if(c.length!==4){setErr('Codigo tem 4 letras!');return;}
+  setErr('');
+  dbR('salas/'+c).then(function(rm){
+    if(!rm){setErr('Sala nao encontrada!');return;}
+    if(rm.players&&rm.players.length>=2){setErr('Sala cheia!');return;}
+    if(rm.phase!=='lobby'){setErr('Jogo ja comecou!');return;}
+    G.name=n; G.id=uid(); G.host=false; G.code=c;
+    G.players=rm.players.concat([{name:n,id:G.id}]);
+    G.scores=Object.assign({},rm.scores); G.scores[G.id]=0;
+    G.ltrs=rm.ltrs;
+    var upd = Object.assign({},rm,{players:G.players,scores:G.scores});
+    return dbW('salas/'+c, upd);
+  }).then(function(){
+    if(G.code){
+      setErr('');
+      document.getElementById('lcode').textContent=G.code;
+      show('s-lobby'); renderLP(); listen();
+    }
+  }).catch(function(e){ setErr('Erro: '+e.message); });
+}
+
+function renderLP(){
+  var el=document.getElementById('lplayers'); el.innerHTML='';
+  G.players.forEach(function(p){
+    var d=document.createElement('div'); d.className='pill';
+    d.innerHTML='<span class="dot"></span>'+p.name+(p.id===G.id?' <span style="color:var(--m);font-size:.73rem">(voce)</span>':'');
+    el.appendChild(d);
+  });
+}
+
+function doStart(){
+  G.rnd=1; G.ltr=G.ltrs[0];
+  dbR('salas/'+G.code).then(function(rm){
+    return dbW('salas/'+G.code, Object.assign({},rm,{phase:'playing',rnd:G.rnd,ltr:G.ltr,answers:{},result:null,action:null,scores:G.scores}));
+  }).then(function(){
+    beginRound(); // host tambem entra no jogo
+  });
+}
+
+function listen(){
+  if(G.unsub)G.unsub();
+  G.unsub=dbSub('salas/'+G.code, handleRoom);
+}
+function unlisten(){ if(G.unsub){G.unsub();G.unsub=null;} }
+
+function handleRoom(rm){
+  if(!rm)return;
+  G.players=rm.players||G.players;
+  G.scores=rm.scores||G.scores;
+  var cur=vscrn();
+
+  if(cur==='s-lobby'){
+    renderLP();
+    if(rm.players&&rm.players.length>=2&&G.host){
+      document.getElementById('bstart').classList.remove('hidden');
+      document.getElementById('lwait').classList.add('hidden');
+    }
+    if(rm.phase==='playing'&&!G.host){G.rnd=rm.rnd;G.ltr=rm.ltr;beginRound();}
+  }
+  if(cur==='s-game'&&!G.sub&&rm.phase==='judging'){
+    clearInterval(G.tInt); G.sub=true; submitAns(getAns());
+  }
+  if(cur==='s-wait'&&rm.phase==='result'){
+    G.scores=rm.scores; showResult(rm.result);
+  }
+  if(cur==='s-result'){
+    if(rm.action==='next'&&!G.host){G.rnd=rm.rnd;G.ltr=rm.ltr;G.scores=rm.scores;beginRound();}
+    if(rm.action==='final'&&!G.host){G.scores=rm.scores;showFinal();}
+  }
+}
+
+function beginRound(){
+  G.sub=false; G.tLeft=SECS;
+  show('s-game');
+  document.getElementById('grd').textContent=G.rnd;
+  document.getElementById('gltr').textContent=G.ltr;
+  var grid=document.getElementById('gcats'); grid.innerHTML='';
+  CATS.forEach(function(cat){
+    var row=document.createElement('div'); row.className='cr';
+    var k=cat.replace('/','_');
+    row.innerHTML='<span class="cl">'+cat+'</span><input type="text" class="ci" data-cat="'+cat+'" placeholder="'+G.ltr+'..." maxlength="30"><span class="sd" id="d'+k+'"></span>';
+    grid.appendChild(row);
+    row.querySelector('input').addEventListener('input',function(e){
+      document.getElementById('d'+k).style.background=e.target.value.trim()?'var(--a)':'var(--b)';
+    });
+  });
+  updBar();
+  G.tInt=setInterval(function(){ G.tLeft--; updBar(); if(G.tLeft<=0){clearInterval(G.tInt);autoStop();} },1000);
+}
+
+function updBar(){
+  var p=(G.tLeft/SECS)*100;
+  var b=document.getElementById('gbar');
+  b.style.width=p+'%'; b.style.background=G.tLeft<=15?'var(--a2)':'var(--a)';
+  document.getElementById('gtxt').textContent=G.tLeft+'s';
+}
+
+function getAns(){
+  var a={};
+  document.querySelectorAll('[data-cat]').forEach(function(i){ a[i.dataset.cat]=i.value.trim(); });
+  return a;
+}
+
+function doStop(){
+  if(G.sub)return;
+  clearInterval(G.tInt); G.sub=true;
+  var ans=getAns();
+  dbR('salas/'+G.code).then(function(rm){
+    var answers=Object.assign({},rm.answers||{});
+    answers[G.id]=ans;
+    return dbW('salas/'+G.code, Object.assign({},rm,{phase:'judging',answers:answers}));
+  }).then(function(){
+    show('s-wait');
+    if(G.host) waitThenJudge();
+    // nao-host: o listener handleRoom ja detecta quando result chega
+  });
+}
+
+function autoStop(){
+  if(G.sub)return; G.sub=true; submitAns(getAns());
+}
+
+function submitAns(ans){
+  show('s-wait');
+  dbR('salas/'+G.code).then(function(rm){
+    var answers=Object.assign({},rm.answers||{});
+    answers[G.id]=ans;
+    var newRm=Object.assign({},rm,{phase:'judging',answers:answers});
+    var allIn=G.players.every(function(p){return answers[p.id]!==undefined;});
+    return dbW('salas/'+G.code, newRm).then(function(){
+      if(allIn&&G.host) return judge(answers, newRm);
+      // se nao-host enviou e todas respostas ja estao la, host detecta via waitThenJudge
+    });
+  });
+}
+
+function waitThenJudge(){
+  var tries=0;
+  function chk(){
+    dbR('salas/'+G.code).then(function(rm){
+      var ans=rm&&rm.answers||{};
+      if(G.players.every(function(p){return ans[p.id]!==undefined;})){
+        judge(ans,rm);
+      } else if(tries++<20){ setTimeout(chk,1500); }
+    });
+  }
+  setTimeout(chk,2000);
+}
+
+function judge(answers,room){
+  var letter=G.ltr; var players=G.players;
+  var p='Arbitro de Adedonha em portugues brasileiro. Letra: "'+letter+'".\n\n';
+  players.forEach(function(pl){
+    p+=pl.name+':\n';
+    CATS.forEach(function(cat){ p+='  '+cat+': "'+(answers[pl.id]&&answers[pl.id][cat]||'')+'"\n'; });
+    p+='\n';
+  });
+  p+='Regras: comecar com "'+letter+'" (ignore acentos/caps); valida pra categoria; mesma resposta=5pts cada; vazia/invalida=0.\nRetorne APENAS JSON sem markdown:\n';
+  p+='{"results":{';
+  p+=players.map(function(pl){
+    return '"'+pl.id+'":{'+CATS.map(function(cat){return '"'+cat+'":{"valid":true,"points":10}';}).join(',')+'}';
+  }).join(',');
+  p+='},"points":{'+players.map(function(pl){return '"'+pl.id+'":60';}).join(',')+'}}'
+
+  return fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:p}]})
+  }).then(function(r){return r.json();}).then(function(data){
+    var txt=(data.content&&data.content.find(function(b){return b.type==='text'})&&data.content.find(function(b){return b.type==='text'}).text)||'{}';
+    var res;
+    try{ res=JSON.parse(txt.replace(/```json|```/g,'').trim()); }
+    catch(e){ res=fallbackJudge(answers,players,letter); }
+    return saveResult(res,answers,room);
+  }).catch(function(){
+    return saveResult(fallbackJudge(answers,players,letter),answers,room);
+  });
+}
+
+function fallbackJudge(answers,players,letter){
+  var res={results:{},points:{}};
+  players.forEach(function(pl){
+    res.results[pl.id]={}; var tot=0;
+    CATS.forEach(function(cat){
+      var ans=(answers[pl.id]&&answers[pl.id][cat])||'';
+      var v=ans.length>0&&norm(ans).charAt(0)===norm(letter).charAt(0);
+      var pts=v?10:0; res.results[pl.id][cat]={valid:v,points:pts}; tot+=pts;
+    });
+    res.points[pl.id]=tot;
+  });
+  return res;
+}
+
+function saveResult(res,answers,room){
+  var ns=Object.assign({},G.scores);
+  for(var id in res.points) ns[id]=(ns[id]||0)+(res.points[id]||0);
+  G.scores=ns;
+  var payload={results:res.results,points:res.points,answers:answers,letter:G.ltr};
+  return dbW('salas/'+G.code, Object.assign({},room,{phase:'result',scores:ns,result:payload,action:null}));
+}
+
+function showResult(data){
+  show('s-result');
+  document.getElementById('rrd').textContent=G.rnd;
+  document.getElementById('rmyp').textContent=data&&data.points&&data.points[G.id]||0;
+  var cont=document.getElementById('rans'); cont.innerHTML='';
+  G.players.forEach(function(pl){
+    var bl=document.createElement('div'); bl.className='ab';
+    bl.innerHTML='<p class="apn">'+pl.name+(pl.id===G.id?' (voce)':'')+'</p>';
+    CATS.forEach(function(cat){
+      var ans=data.answers&&data.answers[pl.id]&&data.answers[pl.id][cat]||'';
+      var r=data.results&&data.results[pl.id]&&data.results[pl.id][cat];
+      var pts=r&&r.points||0; var valid=r&&r.valid;
+      var ch='';
+      if(!ans)ch='<span class="ch cin">—</span>';
+      else if(!valid)ch='<span class="ch cer">invalido</span>';
+      else if(pts===5)ch='<span class="ch cdu">dup +5</span>';
+      else ch='<span class="ch cok">+10</span>';
+      var row=document.createElement('div'); row.className='ar';
+      row.innerHTML='<div><div class="ac">'+cat+'</div><div class="av">'+(ans||'—')+'</div></div>'+ch;
+      bl.appendChild(row);
+    });
+    cont.appendChild(bl);
+  });
+  renderSc('rsc',G.scores);
+  document.getElementById('bnext').classList.add('hidden');
+  document.getElementById('bfinal').classList.add('hidden');
+  document.getElementById('rwait').classList.add('hidden');
+  if(G.host){
+    if(G.rnd<TOT) document.getElementById('bnext').classList.remove('hidden');
+    else document.getElementById('bfinal').classList.remove('hidden');
+  } else { document.getElementById('rwait').classList.remove('hidden'); }
+}
+
+function doNext(){
+  G.rnd++; G.ltr=G.ltrs[G.rnd-1];
+  dbR('salas/'+G.code).then(function(rm){
+    return dbW('salas/'+G.code, Object.assign({},rm,{phase:'playing',rnd:G.rnd,ltr:G.ltr,answers:{},result:null,action:'next',scores:G.scores}));
+  }).then(function(){
+    beginRound(); // host entra direto
+  });
+}
+
+function doFinal(){
+  dbR('salas/'+G.code).then(function(rm){
+    return dbW('salas/'+G.code, Object.assign({},rm,{action:'final',scores:G.scores}));
+  }).then(function(){ showFinal(); });
+}
+
+function showFinal(){
+  show('s-final');
+  var sorted=G.players.slice().sort(function(a,b){return (G.scores[b.id]||0)-(G.scores[a.id]||0);});
+  document.getElementById('fwin').textContent=sorted[0].name+' venceu! 🎉';
+  renderSc('fsc',G.scores);
+}
+
+function renderSc(elId,scores){
+  var el=document.getElementById(elId); el.innerHTML='';
+  var sorted=G.players.slice().sort(function(a,b){return (scores[b.id]||0)-(scores[a.id]||0);});
+  sorted.forEach(function(p){
+    var row=document.createElement('div'); row.className='sr'+(p.id===sorted[0].id?' top':'');
+    row.innerHTML='<span>'+(p.id===G.id?'👤 ':'')+p.name+'</span><span class="sp">'+(scores[p.id]||0)+' pts</span>';
+    el.appendChild(row);
+  });
+}
+
+function doReset(){ unlisten(); G=mk(); show('s-home'); }
+</script>
+</body>
+</html>
