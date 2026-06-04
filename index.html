@@ -245,7 +245,7 @@ var dbU = function(p,d){ return db.ref(p).update(d); };
 
 // ── ESTADO ────────────────────────────────
 var G = mk();
-function mk(){ return {name:'',id:'',code:'',host:false,players:[],scores:{},ltrs:[],rnd:0,ltr:'',stopped:false,sent:false,tInt:null,unsub:null,tLeft:SECS,myAnswers:{}}; }
+function mk(){ return {name:'',id:'',code:'',host:false,players:[],scores:{},ltrs:[],rnd:0,ltr:'',stopped:false,sent:false,judging:false,tInt:null,unsub:null,tLeft:SECS,myAnswers:{}}; }
 
 // ── HOME ──────────────────────────────────
 function doCreate(){
@@ -322,6 +322,7 @@ function onRoom(rm){
   if(rm.scores)G.scores=rm.scores;
   var cur=scr();
 
+  // LOBBY
   if(cur==='s-lobby'){
     if(rm.ltrs)G.ltrs=rm.ltrs;
     renderLP();
@@ -336,7 +337,7 @@ function onRoom(rm){
     return;
   }
 
-  // Alguem deu stop
+  // JOGO: alguem deu stop
   if(cur==='s-game'&&rm.stopped&&!G.stopped){
     G.stopped=true;
     clearInterval(G.tInt);
@@ -348,42 +349,40 @@ function onRoom(rm){
     $('btn-send').classList.remove('hidden');
   }
 
-  // Resultado chegou — qualquer tela menos final
+  // RESULTADO chegou — mostra pra todos
   if(rm.phase==='result'&&rm.result&&cur!=='s-final'){
     if(rm.scores)G.scores=rm.scores;
     showResult(rm.result);
     return;
   }
 
-  // Proxima rodada (nao-host)
+  // PROXIMA RODADA (nao-host)
   if(rm.action==='next'&&cur==='s-result'&&!G.host){
     G.rnd=rm.rnd;G.ltr=rm.ltr;G.ltrs=rm.ltrs||G.ltrs;G.scores=rm.scores||G.scores;
     beginRound();return;
   }
 
-  // Encerrar (nao-host)
+  // ENCERRAR (nao-host)
   if(rm.action==='finish'&&cur!=='s-final'){
     G.scores=rm.scores||G.scores;showFinal();return;
   }
 
-  // Nova partida (nao-host)
+  // NOVA PARTIDA (nao-host)
   if(rm.action==='newgame'&&cur==='s-final'&&!G.host){
     G.rnd=rm.rnd;G.ltr=rm.ltr;G.ltrs=rm.ltrs||G.ltrs;G.scores=rm.scores||G.scores;
     beginRound();return;
   }
 
-  // Atualiza tela de espera
+  // AGUARDANDO: host verifica se todos enviaram e julga
   if(cur==='s-wait'){
-    renderWait(rm.answers||{});
-    // Tenta julgar se todas respostas chegaram e nao foi julgado ainda
-    if(!rm.judging&&rm.answers){
-      var allIn=G.players.every(function(p){return rm.answers[p.id]!==undefined;});
+    var answers=rm.answers||{};
+    renderWait(answers);
+    // So o host julga, e so uma vez (flag G.judging local)
+    if(G.host&&!G.judging&&rm.phase!=='result'){
+      var allIn=G.players.every(function(p){return answers[p.id]!==undefined;});
       if(allIn){
-        // Usa timestamp do meu ID como desempate — menor ID julga
-        var myIdx=G.players.findIndex(function(p){return p.id===G.id;});
-        if(myIdx===0||(G.host)){
-          doJudge(rm.answers,rm);
-        }
+        G.judging=true; // flag local pra nao chamar duas vezes
+        doJudge(answers,rm);
       }
     }
   }
@@ -400,7 +399,7 @@ function buildDots(id,cur){
 }
 
 function beginRound(){
-  G.stopped=false;G.sent=false;G.myAnswers={};G.tLeft=SECS;
+  G.stopped=false;G.sent=false;G.judging=false;G.myAnswers={};G.tLeft=SECS;
   show('s-game');
   $('g-rnd').textContent=G.rnd;
   $('g-ltr').textContent=G.ltr;
@@ -472,30 +471,8 @@ function doSend(){
   $('btn-send').disabled=true;
   $('btn-send').style.opacity='0.5';
   show('s-wait');
-
-  // Salva minhas respostas no firebase
-  var path='salas/'+G.code+'/answers/'+G.id;
-  db.ref(path).set(G.myAnswers).then(function(){
-    // Verifica se todos ja enviaram
-    return dbR('salas/'+G.code+'/answers');
-  }).then(function(answers){
-    answers=answers||{};
-    renderWait(answers);
-    var allIn=G.players.every(function(p){return answers[p.id]!==undefined;});
-    if(allIn){
-      // Trava com transaction pra so um julgar
-      return db.ref('salas/'+G.code+'/judging').transaction(function(cur){
-        if(cur)return; // ja sendo julgado
-        return true;
-      }).then(function(res){
-        if(res.committed){
-          return dbR('salas/'+G.code).then(function(rm){
-            return doJudge(answers,rm);
-          });
-        }
-      });
-    }
-  });
+  // Salva minhas respostas — o listener do host vai detectar quando todos enviarem
+  db.ref('salas/'+G.code+'/answers/'+G.id).set(G.myAnswers);
 }
 
 function renderWait(answers){
