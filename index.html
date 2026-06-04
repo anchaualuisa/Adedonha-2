@@ -5,16 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Adedonha</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;500&display=swap" rel="stylesheet">
-
-<!-- Firebase SDK via compat (funciona em arquivo local no iOS) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <style>
 :root{--bg:#0d0d0d;--s:#161616;--s2:#1f1f1f;--b:#2a2a2a;--a:#c8f04a;--a2:#f04a8a;--t:#f0f0f0;--m:#777}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 48px;overflow-x:hidden}
-body::before{content:'';position:fixed;top:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(200,240,74,.07),transparent 65%);pointer-events:none}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px;overflow-x:hidden}
 #app{width:100%;max-width:420px}
 h1{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;color:var(--a);letter-spacing:-1px;margin-bottom:2px}
 .tag{font-size:.82rem;color:var(--m);font-style:italic;margin-bottom:28px}
@@ -40,7 +36,7 @@ input:focus{border-color:var(--a)}input::placeholder{color:var(--m)}
 .ci{flex:1;margin-bottom:0!important;padding:9px 11px!important;font-size:.88rem!important}
 .sd{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--b);transition:background .2s}
 .rh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:.85rem;color:var(--m)}
-.ab{margin-bottom:12px}
+.ab{margin-bottom:14px}
 .apn{font-size:.7rem;font-family:'Syne',sans-serif;color:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
 .ar{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;background:var(--s2);border-radius:8px;margin-bottom:4px}
 .ac{font-size:.7rem;color:var(--m)}.av{font-size:.88rem;font-weight:500}
@@ -57,11 +53,13 @@ input:focus{border-color:var(--a)}input::placeholder{color:var(--m)}
 @keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
 .hidden{display:none!important}
 .err{color:var(--a2);font-size:.82rem;margin-top:5px;text-align:center;min-height:1.1em}
+.stopped-banner{background:var(--a2);color:#fff;text-align:center;padding:10px;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;margin-bottom:12px;font-size:.9rem}
 </style>
 </head>
 <body>
 <div id="app">
 
+<!-- HOME -->
 <div id="s-home">
   <h1>Adedonha</h1><p class="tag">o classico, com IA pra julgar ✨</p>
   <div class="card">
@@ -75,12 +73,13 @@ input:focus{border-color:var(--a)}input::placeholder{color:var(--m)}
   </div>
 </div>
 
+<!-- LOBBY -->
 <div id="s-lobby" class="hidden">
   <h1>Adedonha</h1><p class="tag">sala criada!</p>
   <div class="card ctr">
     <p class="ct">Codigo — manda pra ela!</p>
     <div class="rc" id="lcode">----</div>
-    <p class="ms">Ela abre o arquivo e digita esse codigo</p>
+    <p class="ms">Ela abre o site e digita esse codigo</p>
   </div>
   <div class="card">
     <p class="ct">Jogadoras</p>
@@ -92,9 +91,11 @@ input:focus{border-color:var(--a)}input::placeholder{color:var(--m)}
   </div>
 </div>
 
+<!-- JOGO -->
 <div id="s-game" class="hidden">
-  <div class="rh"><span>Rodada <strong id="grd">1</strong>/5</span><span id="gtxt" style="font-family:'Syne',sans-serif;font-weight:700;color:var(--a)">60s</span></div>
+  <div class="rh"><span>Rodada <strong id="grd">1</strong></span><span id="gtxt" style="font-family:'Syne',sans-serif;font-weight:700;color:var(--a)">60s</span></div>
   <div class="tw"><div class="tb" id="gbar"></div></div>
+  <div id="stopped-banner" class="stopped-banner hidden">🛑 STOP! Preencha suas respostas e clique em ENVIAR</div>
   <div class="card ctr" style="padding:14px">
     <div class="lb" id="gltr">A</div>
     <p class="ms">com a letra...</p>
@@ -102,18 +103,21 @@ input:focus{border-color:var(--a)}input::placeholder{color:var(--m)}
   <div class="card">
     <p class="ct">Suas respostas</p>
     <div id="gcats"></div>
-    <button class="bstop" onclick="doStop()">STOP! 🛑</button>
+    <button id="btn-stop" class="bstop" onclick="doStop()">STOP! 🛑</button>
+    <button id="btn-send" class="btn bp hidden" onclick="doSend()" style="margin-top:10px">Enviar Respostas ✓</button>
   </div>
 </div>
 
+<!-- AGUARDANDO -->
 <div id="s-wait" class="hidden ctr">
   <div class="card ctr" style="padding:28px 20px">
     <div class="ex">⏳</div>
     <p style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:5px">Respostas enviadas!</p>
-    <p class="ms wa">Esperando a outra jogadora</p>
+    <p class="ms wa">Aguardando todas jogadoras</p>
   </div>
 </div>
 
+<!-- RESULTADO -->
 <div id="s-result" class="hidden">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -122,25 +126,27 @@ input:focus{border-color:var(--a)}input::placeholder{color:var(--m)}
     </div>
     <div id="rans"></div>
   </div>
-  <div class="card"><p class="ct">Placar</p><div id="rsc"></div></div>
-  <button id="bnext" class="btn bp hidden" onclick="doNext()" style="margin-bottom:8px">Proxima Rodada</button>
-  <button id="bfinal" class="btn bp hidden" onclick="doFinal()">Resultado Final 🏆</button>
-  <p id="rwait" class="ms ctr wa hidden" style="margin-top:10px">Esperando host</p>
+  <div class="card"><p class="ct">Placar geral</p><div id="rsc"></div></div>
+  <button id="bnext" class="btn bp hidden" onclick="doNext()" style="margin-bottom:8px">Proxima Rodada ▶</button>
+  <button id="bfinal" class="btn bp hidden" onclick="doFinal()">Encerrar Jogo 🏆</button>
+  <p id="rwait" class="ms ctr wa hidden" style="margin-top:10px">Esperando host iniciar proxima</p>
 </div>
 
+<!-- FINAL -->
 <div id="s-final" class="hidden">
   <div class="card ctr" style="padding:28px 20px">
     <div class="ex">🏆</div>
     <p id="fwin" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;margin-bottom:4px"></p>
     <p class="ms" style="margin-bottom:20px">venceu o jogo!</p>
     <div id="fsc"></div>
-    <button class="btn bs" style="margin-top:18px" onclick="doReset()">Jogar de Novo 🔄</button>
+    <button class="btn bp" style="margin-top:18px" onclick="doNovaRodada()">Nova Rodada 🔄</button>
+    <button class="btn bs" style="margin-top:8px" onclick="doReset()">Sair</button>
   </div>
 </div>
-</div>
+
+</div><!-- #app -->
 
 <script>
-// Firebase compat SDK (ja carregado via script tag acima)
 firebase.initializeApp({
   apiKey: "AIzaSyCuFRF-Cl5_MbebVF2lpcOmpGA3GpEdAO8",
   authDomain: "adedonha-d16ee.firebaseapp.com",
@@ -154,11 +160,11 @@ var db = firebase.database();
 
 var CATS = ['Nome','Animal','Fruta/Verdura','Lugar','Objeto','Celebridade'];
 var LTRS = 'ABCDEFGHIJLMNOPRSTV'.split('');
-var TOT = 5, SECS = 60;
+var SECS = 60;
 
 var uid  = function(){ return Math.random().toString(36).slice(2,9); };
 var norm = function(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); };
-var shuf = function(a){ for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a; };
+var shuf = function(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;} return b; };
 var show = function(id){ document.querySelectorAll('#app>div').forEach(function(d){d.classList.add('hidden');}); document.getElementById(id).classList.remove('hidden'); };
 var setErr = function(m){ document.getElementById('herr').textContent=m; };
 var vscrn = function(){ return ['s-home','s-lobby','s-game','s-wait','s-result','s-final'].find(function(id){return !document.getElementById(id).classList.contains('hidden');}); };
@@ -166,52 +172,48 @@ var genCode = function(){ var c='ABCDEFGHJKLMNPRSTUVWXYZ',s=''; for(var i=0;i<4;
 
 var dbR = function(p){ return db.ref(p).once('value').then(function(s){ return s.exists()?s.val():null; }); };
 var dbW = function(p,d){ return db.ref(p).set(d); };
-var dbSub = function(p,cb){ var r=db.ref(p); r.on('value',function(s){cb(s.val());}); return function(){r.off();}; };
+var dbSub = function(p,cb){ var r=db.ref(p); r.on('value',function(s){cb(s.val());}); return function(){r.off('value');}; };
 
 var G = mk();
-function mk(){ return {name:'',id:'',code:'',host:false,players:[],scores:{},ltrs:[],rnd:0,ltr:'',sub:false,tInt:null,unsub:null,tLeft:SECS}; }
+function mk(){ return {name:'',id:'',code:'',host:false,players:[],scores:{},ltrs:[],rnd:0,ltr:'',stopped:false,sent:false,tInt:null,unsub:null,tLeft:SECS}; }
 
+// ── HOME ──────────────────────────────────────────
 function doCreate(){
-  var n = document.getElementById('iname').value.trim();
+  var n=document.getElementById('iname').value.trim();
   if(!n){setErr('Coloca seu nome!');return;}
-  setErr('');
   G.name=n; G.id=uid(); G.host=true;
-  G.ltrs=shuf(LTRS.slice()).slice(0,TOT);
-  G.players=[{name:n,id:G.id}]; G.scores={}; G.scores[G.id]=0;
+  G.ltrs=shuf(LTRS); G.players=[{name:n,id:G.id}]; G.scores={}; G.scores[G.id]=0;
   G.code=genCode();
-  var data = {phase:'lobby',players:G.players,scores:G.scores,ltrs:G.ltrs,rnd:0,ltr:'',answers:{},result:null,action:null};
-  dbW('salas/'+G.code, data).then(function(){
-    setErr('');
+  dbW('salas/'+G.code,{phase:'lobby',players:G.players,scores:G.scores,ltrs:G.ltrs,rnd:0,ltr:'',stopped:false,answers:{},result:null,action:null})
+  .then(function(){
     document.getElementById('lcode').textContent=G.code;
     show('s-lobby'); renderLP(); listen();
-  }).catch(function(e){ setErr('Erro: '+e.message); });
+  }).catch(function(e){setErr('Erro: '+e.message);});
 }
 
 function doJoin(){
-  var n = document.getElementById('iname').value.trim();
-  var c = document.getElementById('icode').value.trim().toUpperCase();
+  var n=document.getElementById('iname').value.trim();
+  var c=document.getElementById('icode').value.trim().toUpperCase();
   if(!n){setErr('Coloca seu nome!');return;}
   if(c.length!==4){setErr('Codigo tem 4 letras!');return;}
-  setErr('');
+  setErr('Entrando...');
   dbR('salas/'+c).then(function(rm){
-    if(!rm){setErr('Sala nao encontrada!');return;}
-    if(rm.players&&rm.players.length>=2){setErr('Sala cheia!');return;}
-    if(rm.phase!=='lobby'){setErr('Jogo ja comecou!');return;}
+    if(!rm){setErr('Sala nao encontrada!');return Promise.reject('not found');}
+    if(rm.players&&rm.players.length>=4){setErr('Sala cheia!');return Promise.reject('full');}
+    if(rm.phase!=='lobby'){setErr('Jogo ja comecou!');return Promise.reject('started');}
     G.name=n; G.id=uid(); G.host=false; G.code=c;
     G.players=rm.players.concat([{name:n,id:G.id}]);
-    G.scores=Object.assign({},rm.scores); G.scores[G.id]=0;
-    G.ltrs=rm.ltrs;
-    var upd = Object.assign({},rm,{players:G.players,scores:G.scores});
-    return dbW('salas/'+c, upd);
+    G.scores=Object.assign({},rm.scores); G.scores[G.id]=0; G.ltrs=rm.ltrs;
+    return dbW('salas/'+c,Object.assign({},rm,{players:G.players,scores:G.scores}));
   }).then(function(){
-    if(G.code){
-      setErr('');
-      document.getElementById('lcode').textContent=G.code;
-      show('s-lobby'); renderLP(); listen();
-    }
-  }).catch(function(e){ setErr('Erro: '+e.message); });
+    if(!G.code)return;
+    setErr('');
+    document.getElementById('lcode').textContent=G.code;
+    show('s-lobby'); renderLP(); listen();
+  }).catch(function(e){if(e&&e.message)setErr('Erro: '+e.message);});
 }
 
+// ── LOBBY ─────────────────────────────────────────
 function renderLP(){
   var el=document.getElementById('lplayers'); el.innerHTML='';
   G.players.forEach(function(p){
@@ -224,49 +226,86 @@ function renderLP(){
 function doStart(){
   G.rnd=1; G.ltr=G.ltrs[0];
   dbR('salas/'+G.code).then(function(rm){
-    return dbW('salas/'+G.code, Object.assign({},rm,{phase:'playing',rnd:G.rnd,ltr:G.ltr,answers:{},result:null,action:null,scores:G.scores}));
-  }).then(function(){
-    beginRound(); // host tambem entra no jogo
-  });
+    return dbW('salas/'+G.code,Object.assign({},rm,{phase:'playing',rnd:1,ltr:G.ltr,stopped:false,answers:{},result:null,action:null,scores:G.scores}));
+  }).then(function(){ beginRound(); });
 }
 
+// ── LISTENER ──────────────────────────────────────
 function listen(){
   if(G.unsub)G.unsub();
-  G.unsub=dbSub('salas/'+G.code, handleRoom);
+  G.unsub=dbSub('salas/'+G.code,handleRoom);
 }
-function unlisten(){ if(G.unsub){G.unsub();G.unsub=null;} }
+function unlisten(){if(G.unsub){G.unsub();G.unsub=null;}}
 
 function handleRoom(rm){
   if(!rm)return;
   G.players=rm.players||G.players;
-  G.scores=rm.scores||G.scores;
+
   var cur=vscrn();
 
+  // Nao-host: entra no jogo quando host inicia
+  if(cur==='s-lobby'&&rm.phase==='playing'&&!G.host){
+    G.rnd=rm.rnd; G.ltr=rm.ltr; G.scores=rm.scores||G.scores;
+    beginRound(); return;
+  }
+
+  // Alguem deu STOP — para o timer de todos e mostra botao enviar
+  if(cur==='s-game'&&rm.stopped&&!G.stopped){
+    G.stopped=true;
+    clearInterval(G.tInt);
+    // Para o timer visualmente
+    document.getElementById('gbar').style.width='0%';
+    document.getElementById('gtxt').textContent='STOP!';
+    document.getElementById('stopped-banner').classList.remove('hidden');
+    document.getElementById('btn-stop').classList.add('hidden');
+    document.getElementById('btn-send').classList.remove('hidden');
+  }
+
+  // Resultado chegou
+  if((cur==='s-game'||cur==='s-wait')&&rm.phase==='result'){
+    G.scores=rm.scores||G.scores;
+    showResult(rm.result);
+    return;
+  }
+
+  // Proxima rodada (nao-host)
+  if(cur==='s-result'&&rm.action==='next'&&!G.host){
+    G.rnd=rm.rnd; G.ltr=rm.ltr; G.scores=rm.scores||G.scores;
+    beginRound(); return;
+  }
+
+  // Encerrar (nao-host)
+  if(cur==='s-result'&&rm.action==='final'&&!G.host){
+    G.scores=rm.scores||G.scores; showFinal(); return;
+  }
+
+  // Nova rodada zerada (nao-host)
+  if(cur==='s-final'&&rm.action==='nova'&&!G.host){
+    G.scores=rm.scores||G.scores; G.rnd=rm.rnd; G.ltr=rm.ltr; beginRound(); return;
+  }
+
+  // Lobby: atualiza jogadoras e mostra botao start pro host
   if(cur==='s-lobby'){
+    G.players=rm.players||G.players;
+    G.scores=rm.scores||G.scores;
     renderLP();
     if(rm.players&&rm.players.length>=2&&G.host){
       document.getElementById('bstart').classList.remove('hidden');
       document.getElementById('lwait').classList.add('hidden');
     }
-    if(rm.phase==='playing'&&!G.host){G.rnd=rm.rnd;G.ltr=rm.ltr;beginRound();}
-  }
-  if(cur==='s-game'&&!G.sub&&rm.phase==='judging'){
-    clearInterval(G.tInt); G.sub=true; submitAns(getAns());
-  }
-  if(cur==='s-wait'&&rm.phase==='result'){
-    G.scores=rm.scores; showResult(rm.result);
-  }
-  if(cur==='s-result'){
-    if(rm.action==='next'&&!G.host){G.rnd=rm.rnd;G.ltr=rm.ltr;G.scores=rm.scores;beginRound();}
-    if(rm.action==='final'&&!G.host){G.scores=rm.scores;showFinal();}
   }
 }
 
+// ── ROUND ─────────────────────────────────────────
 function beginRound(){
-  G.sub=false; G.tLeft=SECS;
+  G.stopped=false; G.sent=false; G.tLeft=SECS;
   show('s-game');
   document.getElementById('grd').textContent=G.rnd;
   document.getElementById('gltr').textContent=G.ltr;
+  document.getElementById('stopped-banner').classList.add('hidden');
+  document.getElementById('btn-stop').classList.remove('hidden');
+  document.getElementById('btn-send').classList.add('hidden');
+
   var grid=document.getElementById('gcats'); grid.innerHTML='';
   CATS.forEach(function(cat){
     var row=document.createElement('div'); row.className='cr';
@@ -277,8 +316,17 @@ function beginRound(){
       document.getElementById('d'+k).style.background=e.target.value.trim()?'var(--a)':'var(--b)';
     });
   });
+
   updBar();
-  G.tInt=setInterval(function(){ G.tLeft--; updBar(); if(G.tLeft<=0){clearInterval(G.tInt);autoStop();} },1000);
+  G.tInt=setInterval(function(){
+    G.tLeft--; updBar();
+    if(G.tLeft<=0){
+      clearInterval(G.tInt);
+      // Tempo acabou: para pra todos e envia automaticamente
+      if(!G.stopped) triggerStop();
+      else if(!G.sent) doSend();
+    }
+  },1000);
 }
 
 function updBar(){
@@ -290,87 +338,95 @@ function updBar(){
 
 function getAns(){
   var a={};
-  document.querySelectorAll('[data-cat]').forEach(function(i){ a[i.dataset.cat]=i.value.trim(); });
+  document.querySelectorAll('[data-cat]').forEach(function(i){a[i.dataset.cat]=i.value.trim();});
   return a;
 }
 
+// Qualquer jogadora pode dar STOP — para todo mundo
 function doStop(){
-  if(G.sub)return;
-  clearInterval(G.tInt); G.sub=true;
+  if(G.stopped)return;
+  triggerStop();
+}
+
+function triggerStop(){
+  G.stopped=true;
+  clearInterval(G.tInt);
+  // Grava no firebase que houve stop — todos os listeners vao reagir
+  dbR('salas/'+G.code).then(function(rm){
+    return dbW('salas/'+G.code,Object.assign({},rm,{stopped:true,phase:'stopped'}));
+  });
+  // Localmente ja mostra o estado de stop
+  document.getElementById('gbar').style.width='0%';
+  document.getElementById('gtxt').textContent='STOP!';
+  document.getElementById('stopped-banner').classList.remove('hidden');
+  document.getElementById('btn-stop').classList.add('hidden');
+  document.getElementById('btn-send').classList.remove('hidden');
+}
+
+// Cada jogadora envia suas respostas quando quiser (apos stop)
+function doSend(){
+  if(G.sent)return;
+  G.sent=true;
   var ans=getAns();
+  document.getElementById('btn-send').textContent='Enviado ✓';
+  document.getElementById('btn-send').disabled=true;
+  document.getElementById('btn-send').style.opacity='0.6';
+
   dbR('salas/'+G.code).then(function(rm){
     var answers=Object.assign({},rm.answers||{});
     answers[G.id]=ans;
-    return dbW('salas/'+G.code, Object.assign({},rm,{phase:'judging',answers:answers}));
-  }).then(function(){
-    show('s-wait');
-    if(G.host) waitThenJudge();
-    // nao-host: o listener handleRoom ja detecta quando result chega
-  });
-}
-
-function autoStop(){
-  if(G.sub)return; G.sub=true; submitAns(getAns());
-}
-
-function submitAns(ans){
-  show('s-wait');
-  dbR('salas/'+G.code).then(function(rm){
-    var answers=Object.assign({},rm.answers||{});
-    answers[G.id]=ans;
-    var newRm=Object.assign({},rm,{phase:'judging',answers:answers});
+    var newRm=Object.assign({},rm,{answers:answers});
+    // Checa se todos enviaram
     var allIn=G.players.every(function(p){return answers[p.id]!==undefined;});
-    return dbW('salas/'+G.code, newRm).then(function(){
-      if(allIn&&G.host) return judge(answers, newRm);
-      // se nao-host enviou e todas respostas ja estao la, host detecta via waitThenJudge
+    return dbW('salas/'+G.code,newRm).then(function(){
+      if(allIn){
+        // Todos enviaram — host julga
+        if(G.host) return judge(answers,newRm);
+        // nao-host espera resultado via listener
+      }
+      // Enquanto aguarda, mostra tela de espera
+      if(!allIn) show('s-wait');
     });
   });
 }
 
-function waitThenJudge(){
-  var tries=0;
-  function chk(){
-    dbR('salas/'+G.code).then(function(rm){
-      var ans=rm&&rm.answers||{};
-      if(G.players.every(function(p){return ans[p.id]!==undefined;})){
-        judge(ans,rm);
-      } else if(tries++<20){ setTimeout(chk,1500); }
-    });
-  }
-  setTimeout(chk,2000);
-}
-
+// ── JULGAMENTO ────────────────────────────────────
 function judge(answers,room){
   var letter=G.ltr; var players=G.players;
-  var p='Arbitro de Adedonha em portugues brasileiro. Letra: "'+letter+'".\n\n';
+  var prompt='Arbitro de Adedonha em portugues brasileiro. Letra da rodada: "'+letter+'".\n\n';
   players.forEach(function(pl){
-    p+=pl.name+':\n';
-    CATS.forEach(function(cat){ p+='  '+cat+': "'+(answers[pl.id]&&answers[pl.id][cat]||'')+'"\n'; });
-    p+='\n';
+    prompt+=pl.name+':\n';
+    CATS.forEach(function(cat){
+      prompt+='  '+cat+': "'+(answers[pl.id]&&answers[pl.id][cat]||'')+'"\n';
+    });
+    prompt+='\n';
   });
-  p+='Regras: comecar com "'+letter+'" (ignore acentos/caps); valida pra categoria; mesma resposta=5pts cada; vazia/invalida=0.\nRetorne APENAS JSON sem markdown:\n';
-  p+='{"results":{';
-  p+=players.map(function(pl){
-    return '"'+pl.id+'":{'+CATS.map(function(cat){return '"'+cat+'":{"valid":true,"points":10}';}).join(',')+'}';
-  }).join(',');
-  p+='},"points":{'+players.map(function(pl){return '"'+pl.id+'":60';}).join(',')+'}}'
+  prompt+='Regras:\n';
+  prompt+='1. Resposta deve comecar com a letra "'+letter+'" (ignore acentos e maiusculas)\n';
+  prompt+='2. Deve ser valida para a categoria\n';
+  prompt+='3. Se duas jogadoras derem a mesma resposta (normalizada), ambas ganham 5 pts em vez de 10\n';
+  prompt+='4. Resposta vazia ou invalida = 0 pts\n\n';
+  prompt+='Retorne APENAS JSON sem markdown, exemplo:\n';
+  prompt+='{"results":{"ID1":{"Nome":{"valid":true,"points":10},"Animal":{"valid":false,"points":0},"Fruta/Verdura":{"valid":true,"points":10},"Lugar":{"valid":true,"points":10},"Objeto":{"valid":true,"points":10},"Celebridade":{"valid":true,"points":10}},"ID2":{...}},"points":{"ID1":50,"ID2":30}}\n\n';
+  prompt+='IDs reais:\n';
+  players.forEach(function(pl){ prompt+=pl.name+' -> '+pl.id+'\n'; });
 
   return fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:p}]})
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})
   }).then(function(r){return r.json();}).then(function(data){
-    var txt=(data.content&&data.content.find(function(b){return b.type==='text'})&&data.content.find(function(b){return b.type==='text'}).text)||'{}';
+    var txt=(data.content&&data.content.find(function(b){return b.type==='text';}))||{};
     var res;
-    try{ res=JSON.parse(txt.replace(/```json|```/g,'').trim()); }
-    catch(e){ res=fallbackJudge(answers,players,letter); }
+    try{ res=JSON.parse((txt.text||'{}').replace(/```json|```/g,'').trim()); }
+    catch(e){ res=fallback(answers,players,letter); }
     return saveResult(res,answers,room);
   }).catch(function(){
-    return saveResult(fallbackJudge(answers,players,letter),answers,room);
+    return saveResult(fallback(answers,players,letter),answers,room);
   });
 }
 
-function fallbackJudge(answers,players,letter){
+function fallback(answers,players,letter){
   var res={results:{},points:{}};
   players.forEach(function(pl){
     res.results[pl.id]={}; var tot=0;
@@ -385,25 +441,28 @@ function fallbackJudge(answers,players,letter){
 }
 
 function saveResult(res,answers,room){
+  // Acumula pontos no placar total
   var ns=Object.assign({},G.scores);
   for(var id in res.points) ns[id]=(ns[id]||0)+(res.points[id]||0);
   G.scores=ns;
   var payload={results:res.results,points:res.points,answers:answers,letter:G.ltr};
-  return dbW('salas/'+G.code, Object.assign({},room,{phase:'result',scores:ns,result:payload,action:null}));
+  return dbW('salas/'+G.code,Object.assign({},room,{phase:'result',scores:ns,result:payload,action:null}));
 }
 
+// ── RESULTADO ─────────────────────────────────────
 function showResult(data){
   show('s-result');
   document.getElementById('rrd').textContent=G.rnd;
-  document.getElementById('rmyp').textContent=data&&data.points&&data.points[G.id]||0;
+  document.getElementById('rmyp').textContent=(data&&data.points&&data.points[G.id])||0;
+
   var cont=document.getElementById('rans'); cont.innerHTML='';
   G.players.forEach(function(pl){
     var bl=document.createElement('div'); bl.className='ab';
     bl.innerHTML='<p class="apn">'+pl.name+(pl.id===G.id?' (voce)':'')+'</p>';
     CATS.forEach(function(cat){
-      var ans=data.answers&&data.answers[pl.id]&&data.answers[pl.id][cat]||'';
+      var ans=(data.answers&&data.answers[pl.id]&&data.answers[pl.id][cat])||'';
       var r=data.results&&data.results[pl.id]&&data.results[pl.id][cat];
-      var pts=r&&r.points||0; var valid=r&&r.valid;
+      var pts=(r&&r.points)||0; var valid=r&&r.valid;
       var ch='';
       if(!ans)ch='<span class="ch cin">—</span>';
       else if(!valid)ch='<span class="ch cer">invalido</span>';
@@ -415,29 +474,49 @@ function showResult(data){
     });
     cont.appendChild(bl);
   });
+
   renderSc('rsc',G.scores);
+
   document.getElementById('bnext').classList.add('hidden');
   document.getElementById('bfinal').classList.add('hidden');
   document.getElementById('rwait').classList.add('hidden');
+
   if(G.host){
-    if(G.rnd<TOT) document.getElementById('bnext').classList.remove('hidden');
-    else document.getElementById('bfinal').classList.remove('hidden');
-  } else { document.getElementById('rwait').classList.remove('hidden'); }
+    document.getElementById('bnext').classList.remove('hidden');
+    document.getElementById('bfinal').classList.remove('hidden');
+  } else {
+    document.getElementById('rwait').classList.remove('hidden');
+  }
 }
 
 function doNext(){
-  G.rnd++; G.ltr=G.ltrs[G.rnd-1];
+  G.rnd++;
+  G.ltr=G.ltrs[(G.rnd-1)%G.ltrs.length];
   dbR('salas/'+G.code).then(function(rm){
-    return dbW('salas/'+G.code, Object.assign({},rm,{phase:'playing',rnd:G.rnd,ltr:G.ltr,answers:{},result:null,action:'next',scores:G.scores}));
-  }).then(function(){
-    beginRound(); // host entra direto
-  });
+    return dbW('salas/'+G.code,Object.assign({},rm,{
+      phase:'playing',rnd:G.rnd,ltr:G.ltr,stopped:false,
+      answers:{},result:null,action:'next',scores:G.scores
+    }));
+  }).then(function(){ beginRound(); });
 }
 
 function doFinal(){
   dbR('salas/'+G.code).then(function(rm){
-    return dbW('salas/'+G.code, Object.assign({},rm,{action:'final',scores:G.scores}));
+    return dbW('salas/'+G.code,Object.assign({},rm,{action:'final',scores:G.scores}));
   }).then(function(){ showFinal(); });
+}
+
+function doNovaRodada(){
+  // Zera pontos e começa nova partida
+  var ns={};
+  G.players.forEach(function(p){ns[p.id]=0;});
+  G.scores=ns; G.rnd=1; G.ltr=G.ltrs[0];
+  dbR('salas/'+G.code).then(function(rm){
+    return dbW('salas/'+G.code,Object.assign({},rm,{
+      phase:'playing',rnd:1,ltr:G.ltr,stopped:false,
+      answers:{},result:null,action:'nova',scores:ns
+    }));
+  }).then(function(){ beginRound(); });
 }
 
 function showFinal(){
@@ -451,7 +530,8 @@ function renderSc(elId,scores){
   var el=document.getElementById(elId); el.innerHTML='';
   var sorted=G.players.slice().sort(function(a,b){return (scores[b.id]||0)-(scores[a.id]||0);});
   sorted.forEach(function(p){
-    var row=document.createElement('div'); row.className='sr'+(p.id===sorted[0].id?' top':'');
+    var row=document.createElement('div');
+    row.className='sr'+(p.id===sorted[0].id?' top':'');
     row.innerHTML='<span>'+(p.id===G.id?'👤 ':'')+p.name+'</span><span class="sp">'+(scores[p.id]||0)+' pts</span>';
     el.appendChild(row);
   });
